@@ -1,0 +1,266 @@
+jamesdanielmarrsritchey: ```#include <cryptopp/sha.h>
+#include <cryptopp/filters.h>
+#include <cryptopp/hex.h>
+#include <iostream>
+#include <string>
+#include <getopt.h>
+
+int main(int argc, char* argv[]) {
+    std::string line;
+    if (!std::getline(std::cin, line) || line.empty()) {
+        return 1;
+    }
+
+    CryptoPP::SHA256 hash;
+    std::string digest;
+
+    bool useUppercase = false;
+
+    struct option long_options[] = {
+        {"letter_case", required_argument, 0, 'l'},
+        {0, 0, 0, 0}
+    };
+
+    int opt;
+    int option_index = 0;
+    while ((opt = getopt_long(argc, argv, "l:", long_options, &option_index)) != -1) {
+        if (opt == 'l') {
+            if (std::string(optarg) == "upper") {
+                useUppercase = true;
+            } else if (std::string(optarg) == "lower") {
+                useUppercase = false;
+            } else {
+                std::cerr << "Invalid argument for --letter_case: " << optarg << std::endl;
+                return 1;
+            }
+        }
+    }
+
+    CryptoPP::StringSource s(line, true, 
+        new CryptoPP::HashFilter(hash, 
+            new CryptoPP::HexEncoder(
+                new CryptoPP::StringSink(digest), useUppercase)));
+
+    std::cout << digest << std::endl;
+
+    return 0;
+}
+
+GitHub Copilot: This C++ program uses the Crypto++ library to compute the SHA-256 hash of a string input from the standard input (stdin). It also provides an option to output the hash in either uppercase or lowercase hexadecimal.
+
+Here's a step-by-step explanation:
+
+1. The program reads a line from the standard input. If the line is empty, the program exits with a return code of 1.
+
+2. It initializes a `CryptoPP::SHA256` object to compute the SHA-256 hash and a `std::string` to store the resulting digest.
+
+3. It sets a flag `useUppercase` to false. This flag will determine whether the output hash is in uppercase or lowercase.
+
+4. It defines a `long_options` array for parsing command-line options. The program accepts a `--letter_case` option (or `-l` in short form) which can be either "upper" or "lower".
+
+5. It enters a loop where it uses `getopt_long` to parse the command-line options. If the `--letter_case` option is provided, it checks the argument. If the argument is "upper", it sets `useUppercase` to true. If the argument is "lower", it sets `useUppercase` to false. If the argument is neither "upper" nor "lower", it prints an error message and exits with a return code of 1.
+
+6. It creates a `CryptoPP::StringSource` object with the input line, a `CryptoPP::HashFilter` with the SHA-256 hash, and a `CryptoPP::HexEncoder` with the `useUppercase` flag. The `CryptoPP::StringSource` object will automatically pump the data through the `CryptoPP::HashFilter` and `CryptoPP::HexEncoder` to compute the hash and encode it in hexadecimal.
+
+7. It prints the resulting digest to the standard output (stdout).
+
+8. It returns 0 to indicate successful execution.
+
+jamesdanielmarrsritchey: Modify it so that it does not recieve data from stdin. Instead it should have an an argument that passes a string to hash.
+
+GitHub Copilot: Sure, here's the modified code:
+
+```cpp
+#include <cryptopp/sha.h>
+#include <cryptopp/filters.h>
+#include <cryptopp/hex.h>
+#include <iostream>
+#include <string>
+#include <getopt.h>
+
+int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <string to hash> [--letter_case upper|lower]" << std::endl;
+        return 1;
+    }
+
+    std::string line = argv[1];
+
+    CryptoPP::SHA256 hash;
+    std::string digest;
+
+    bool useUppercase = false;
+
+    struct option long_options[] = {
+        {"letter_case", required_argument, 0, 'l'},
+        {0, 0, 0, 0}
+    };
+
+    int opt;
+    int option_index = 0;
+    while ((opt = getopt_long(argc, argv, "l:", long_options, &option_index)) != -1) {
+        if (opt == 'l') {
+            if (std::string(optarg) == "upper") {
+                useUppercase = true;
+            } else if (std::string(optarg) == "lower") {
+                useUppercase = false;
+            } else {
+                std::cerr << "Invalid argument for --letter_case: " << optarg << std::endl;
+                return 1;
+            }
+        }
+    }
+
+    CryptoPP::StringSource s(line, true, 
+        new CryptoPP::HashFilter(hash, 
+            new CryptoPP::HexEncoder(
+                new CryptoPP::StringSink(digest), useUppercase)));
+
+    std::cout << digest << std::endl;
+
+    return 0;
+}
+```
+
+In this version, the program expects the string to hash as the first command-line argument. If no arguments are provided, it prints a usage message and exits with a return code of 1. The `--letter_case` option works as before.
+
+jamesdanielmarrsritchey: The string argument should be formatted as "--string value"
+
+GitHub Copilot: Sure, here's the modified code:
+
+```cpp
+#include <cryptopp/sha.h>
+#include <cryptopp/filters.h>
+#include <cryptopp/hex.h>
+#include <iostream>
+#include <string>
+#include <getopt.h>
+
+int main(int argc, char* argv[]) {
+    CryptoPP::SHA256 hash;
+    std::string digest;
+    std::string line;
+
+    bool useUppercase = false;
+
+    struct option long_options[] = {
+        {"string", required_argument, 0, 's'},
+        {"letter_case", required_argument, 0, 'l'},
+        {0, 0, 0, 0}
+    };
+
+    int opt;
+    int option_index = 0;
+    while ((opt = getopt_long(argc, argv, "s:l:", long_options, &option_index)) != -1) {
+        switch (opt) {
+            case 's':
+                line = optarg;
+                break;
+            case 'l':
+                if (std::string(optarg) == "upper") {
+                    useUppercase = true;
+                } else if (std::string(optarg) == "lower") {
+                    useUppercase = false;
+                } else {
+                    std::cerr << "Invalid argument for --letter_case: " << optarg << std::endl;
+                    return 1;
+                }
+                break;
+            default:
+                std::cerr << "Usage: " << argv[0] << " --string <string to hash> [--letter_case upper|lower]" << std::endl;
+                return 1;
+        }
+    }
+
+    if (line.empty()) {
+        std::cerr << "No string provided to hash. Use --string option." << std::endl;
+        return 1;
+    }
+
+    CryptoPP::StringSource s(line, true, 
+        new CryptoPP::HashFilter(hash, 
+            new CryptoPP::HexEncoder(
+                new CryptoPP::StringSink(digest), useUppercase)));
+
+    std::cout << digest << std::endl;
+
+    return 0;
+}
+```
+
+In this version, the program expects the string to hash as an argument to the `--string` option. If no `--string` option is provided, it prints an error message and exits with a return code of 1. The `--letter_case` option works as before.
+
+jamesdanielmarrsritchey: Replace the string arument with an argument formatted as "--file value", and make the program hash a file instead of a string.
+
+GitHub Copilot: Sure, here's the modified code:
+
+```cpp
+#include <cryptopp/sha.h>
+#include <cryptopp/filters.h>
+#include <cryptopp/hex.h>
+#include <cryptopp/files.h>
+#include <iostream>
+#include <string>
+#include <getopt.h>
+#include <fstream>
+
+int main(int argc, char* argv[]) {
+    CryptoPP::SHA256 hash;
+    std::string digest;
+    std::string filename;
+
+    bool useUppercase = false;
+
+    struct option long_options[] = {
+        {"file", required_argument, 0, 'f'},
+        {"letter_case", required_argument, 0, 'l'},
+        {0, 0, 0, 0}
+    };
+
+    int opt;
+    int option_index = 0;
+    while ((opt = getopt_long(argc, argv, "f:l:", long_options, &option_index)) != -1) {
+        switch (opt) {
+            case 'f':
+                filename = optarg;
+                break;
+            case 'l':
+                if (std::string(optarg) == "upper") {
+                    useUppercase = true;
+                } else if (std::string(optarg) == "lower") {
+                    useUppercase = false;
+                } else {
+                    std::cerr << "Invalid argument for --letter_case: " << optarg << std::endl;
+                    return 1;
+                }
+                break;
+            default:
+                std::cerr << "Usage: " << argv[0] << " --file <file to hash> [--letter_case upper|lower]" << std::endl;
+                return 1;
+        }
+    }
+
+    if (filename.empty()) {
+        std::cerr << "No file provided to hash. Use --file option." << std::endl;
+        return 1;
+    }
+
+    try {
+        CryptoPP::FileSource f(filename.c_str(), true, 
+            new CryptoPP::HashFilter(hash, 
+                new CryptoPP::HexEncoder(
+                    new CryptoPP::StringSink(digest), useUppercase)));
+    } catch (const CryptoPP::Exception& e) {
+        std::cerr << "Error reading file: " << e.what() << std::endl;
+        return 1;
+    }
+
+    std::cout << digest << std::endl;
+
+    return 0;
+}
+```
+
+In this version, the program expects the path to a file to hash as an argument to the `--file` option. If no `--file` option is provided, it prints an error message and exits with a return code of 1. The `--letter_case` option works as before.
+
+The program uses `CryptoPP::FileSource` instead of `CryptoPP::StringSource` to read the file and compute the hash. If there's an error reading the file, it catches the exception, prints an error message, and exits with a return code of 1.
